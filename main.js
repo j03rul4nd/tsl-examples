@@ -263,6 +263,30 @@ function init() {
 
     const gui = new GUI();
 
+    // Agregar más controles al GUI
+gui.add( directionalLight, 'intensity', 0, 5, 0.1 ).name( 'Light Intensity' );
+gui.add( ambientLight, 'intensity', 0, 2, 0.1 ).name( 'Ambient Intensity' );
+gui.add( camera.position, 'x', -10, 10, 0.1 ).name( 'Camera X' );
+gui.add( camera.position, 'y', -10, 10, 0.1 ).name( 'Camera Y' );
+gui.add( camera.position, 'z', -10, 20, 0.1 ).name( 'Camera Z' );
+gui.add( material, 'opacity', 0, 1, 0.01 ).name( 'Particle Opacity' ).onChange(value => material.opacity = value);
+gui.add( attractors[0].helper.scale, 'x', 0.1, 2, 0.01 ).name( 'Helper Scale X' ).onChange(value => {
+    for (const attractor of attractors) {
+        attractor.helper.scale.setScalar(value);
+    }
+});
+gui.add( timeScale, 'value', 0.1, 5, 0.1 ).na
+me( 'Time Scale' );
+// Define a variable to store the background color
+let backgroundColor = '#000000'; // Initial color
+
+// Update the renderer background color
+gui.addColor({ backgroundColor }, 'backgroundColor').name('Background').onChange(value => {
+    backgroundColor = value;
+    renderer.setClearColor(new THREE.Color(value));
+});
+
+
     gui.add( { attractorMassExponent: attractorMass.value.toString().length - 1 }, 'attractorMassExponent', 1, 10, 1 ).onChange( value => attractorMass.value = Number( `1e${value}` ) );
     gui.add( { particleGlobalMassExponent: particleGlobalMass.value.toString().length - 1 }, 'particleGlobalMassExponent', 1, 10, 1 ).onChange( value => particleGlobalMass.value = Number( `1e${value}` ) );
     gui.add( maxSpeed, 'value', 0, 10, 0.01 ).name( 'maxSpeed' );
