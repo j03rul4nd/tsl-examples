@@ -130,7 +130,9 @@ function init() {
     const boundHalfExtent = uniform( 8 );
     const colorA = uniform( color( '#5900ff' ) );
     const colorB = uniform( color( '#ffa575' ) );
-
+    const colorC = uniform(color('#00ff00')); // Color verde
+    const colorD = uniform(color('#ff0000')); // Color rojo
+    
     const positionBuffer = storage( new THREE.StorageInstancedBufferAttribute( count, 3 ), 'vec3', count );
     const velocityBuffer = storage( new THREE.StorageInstancedBufferAttribute( count, 3 ), 'vec3', count );
 
@@ -240,16 +242,34 @@ function init() {
 
     material.positionNode = positionBuffer.toAttribute();
 
-    material.colorNode = Fn( () => {
+    // material.colorNode = Fn( () => {
 
+    //     const velocity = velocityBuffer.toAttribute();
+    //     const speed = velocity.length();
+    //     const colorMix = speed.div( maxSpeed ).smoothstep( 0, 0.5 );
+    //     const finalColor = mix( colorA, colorB, colorMix );
+
+    //     return vec4( finalColor, 1 );
+
+    // } )();
+
+    material.colorNode = Fn(() => {
         const velocity = velocityBuffer.toAttribute();
         const speed = velocity.length();
-        const colorMix = speed.div( maxSpeed ).smoothstep( 0, 0.5 );
-        const finalColor = mix( colorA, colorB, colorMix );
-
-        return vec4( finalColor, 1 );
-
-    } )();
+    
+        // Mapear la velocidad en tres segmentos de mezcla de color para usar todos los colores
+        const colorMix1 = speed.div(maxSpeed).smoothstep(0, 0.33);
+        const colorMix2 = speed.div(maxSpeed).smoothstep(0.33, 0.66);
+        const colorMix3 = speed.div(maxSpeed).smoothstep(0.66, 1);
+    
+        // Mezclar los colores progresivamente para asegurarnos de que todos sean visibles
+        const intermediateColor1 = mix(colorA, colorB, colorMix1);
+        const intermediateColor2 = mix(intermediateColor1, colorC, colorMix2);
+        const finalColor = mix(intermediateColor2, colorD, colorMix3);
+    
+        return vec4(finalColor, 1);
+    })();
+    
 
     material.scaleNode = particleMassMultiplier.mul( scale );
 
@@ -283,9 +303,11 @@ gui.add( scale, 'value', 0.001, 0.1, 0.001 ).name( 'Particle Scale' );
 gui.add( boundHalfExtent, 'value', 1, 20, 0.1 ).name( 'Bound Half Extent' );
 
 // Colores de partículas
+// Agregar opciones a la GUI para los colores adicionales
 gui.addColor({ colorA: colorA.value.getHexString(THREE.SRGBColorSpace) }, 'colorA').name('Color A').onChange(value => colorA.value.set(value));
 gui.addColor({ colorB: colorB.value.getHexString(THREE.SRGBColorSpace) }, 'colorB').name('Color B').onChange(value => colorB.value.set(value));
-
+gui.addColor({ colorC: colorC.value.getHexString(THREE.SRGBColorSpace) }, 'colorC').name('Color C').onChange(value => colorC.value.set(value));
+gui.addColor({ colorD: colorD.value.getHexString(THREE.SRGBColorSpace) }, 'colorD').name('Color D').onChange(value => colorD.value.set(value));
 // Parámetros avanzados para masa
 gui.add({ attractorMassExponent: attractorMass.value.toString().length - 1 }, 'attractorMassExponent', 1, 10, 1).name('Attractor Mass Exp').onChange(value => attractorMass.value = Number(`1e${value}`));
 gui.add({ particleGlobalMassExponent: particleGlobalMass.value.toString().length - 1 }, 'particleGlobalMassExponent', 1, 10, 1).name('Particle Mass Exp').onChange(value => particleGlobalMass.value = Number(`1e${value}`));
