@@ -263,73 +263,61 @@ function init() {
 
     const gui = new GUI();
 
-    // Agregar más controles al GUI
+// debug
+
+
+// Parámetros de luces y cámara
 gui.add( directionalLight, 'intensity', 0, 5, 0.1 ).name( 'Light Intensity' );
 gui.add( ambientLight, 'intensity', 0, 2, 0.1 ).name( 'Ambient Intensity' );
 gui.add( camera.position, 'x', -10, 10, 0.1 ).name( 'Camera X' );
 gui.add( camera.position, 'y', -10, 10, 0.1 ).name( 'Camera Y' );
 gui.add( camera.position, 'z', -10, 20, 0.1 ).name( 'Camera Z' );
-gui.add( material, 'opacity', 0, 1, 0.01 ).name( 'Particle Opacity' ).onChange(value => material.opacity = value);
-gui.add( attractors[0].helper.scale, 'x', 0.1, 2, 0.01 ).name( 'Helper Scale X' ).onChange(value => {
-    for (const attractor of attractors) {
-        attractor.helper.scale.setScalar(value);
-    }
-});
-gui.add( timeScale, 'value', 0.1, 5, 0.1 ).na
-me( 'Time Scale' );
-// Define a variable to store the background color
-let backgroundColor = '#000000'; // Initial color
 
-// Update the renderer background color
+// Parámetros de partículas
+gui.add( material, 'opacity', 0, 1, 0.01 ).name( 'Particle Opacity' ).onChange(value => material.opacity = value);
+gui.add( timeScale, 'value', 0.1, 5, 0.1 ).name( 'Time Scale' );
+gui.add( maxSpeed, 'value', 0, 10, 0.01 ).name( 'Max Speed' );
+gui.add( velocityDamping, 'value', 0, 1, 0.01 ).name( 'Velocity Damping' );
+gui.add( spinningStrength, 'value', 0, 10, 0.1 ).name( 'Spinning Strength' );
+gui.add( scale, 'value', 0.001, 0.1, 0.001 ).name( 'Particle Scale' );
+gui.add( boundHalfExtent, 'value', 1, 20, 0.1 ).name( 'Bound Half Extent' );
+
+// Colores de partículas
+gui.addColor({ colorA: colorA.value.getHexString(THREE.SRGBColorSpace) }, 'colorA').name('Color A').onChange(value => colorA.value.set(value));
+gui.addColor({ colorB: colorB.value.getHexString(THREE.SRGBColorSpace) }, 'colorB').name('Color B').onChange(value => colorB.value.set(value));
+
+// Parámetros avanzados para masa
+gui.add({ attractorMassExponent: attractorMass.value.toString().length - 1 }, 'attractorMassExponent', 1, 10, 1).name('Attractor Mass Exp').onChange(value => attractorMass.value = Number(`1e${value}`));
+gui.add({ particleGlobalMassExponent: particleGlobalMass.value.toString().length - 1 }, 'particleGlobalMassExponent', 1, 10, 1).name('Particle Mass Exp').onChange(value => particleGlobalMass.value = Number(`1e${value}`));
+
+// Escala de los ayudantes de los atractores
+gui.add(attractors[0].helper.scale, 'x', 0.1, 2, 0.01).name('Helper Scale').onChange(value => {
+    attractors.forEach(attractor => attractor.helper.scale.setScalar(value));
+});
+
+// Controles de modo y visibilidad
+gui.add({ controlsMode: attractors[0].controls.mode }, 'controlsMode').options(['translate', 'rotate', 'none']).name('Controls Mode').onChange(value => {
+    attractors.forEach(attractor => {
+        attractor.controls.visible = value !== 'none';
+        attractor.controls.enabled = value !== 'none';
+        attractor.controls.mode = value;
+    });
+});
+
+gui.add({ helperVisible: attractors[0].helper.visible }, 'helperVisible').name('Show Helpers').onChange(value => {
+    attractors.forEach(attractor => attractor.helper.visible = value);
+});
+
+// Control de color de fondo
+let backgroundColor = '#000000'; // Color inicial
 gui.addColor({ backgroundColor }, 'backgroundColor').name('Background').onChange(value => {
     backgroundColor = value;
     renderer.setClearColor(new THREE.Color(value));
 });
 
+// Botón de reinicio
+gui.add({ reset }, 'reset').name('Reset Particles');
 
-    gui.add( { attractorMassExponent: attractorMass.value.toString().length - 1 }, 'attractorMassExponent', 1, 10, 1 ).onChange( value => attractorMass.value = Number( `1e${value}` ) );
-    gui.add( { particleGlobalMassExponent: particleGlobalMass.value.toString().length - 1 }, 'particleGlobalMassExponent', 1, 10, 1 ).onChange( value => particleGlobalMass.value = Number( `1e${value}` ) );
-    gui.add( maxSpeed, 'value', 0, 10, 0.01 ).name( 'maxSpeed' );
-    gui.add( velocityDamping, 'value', 0, 0.1, 0.001 ).name( 'velocityDamping' );
-    gui.add( spinningStrength, 'value', 0, 10, 0.01 ).name( 'spinningStrength' );
-    gui.add( scale, 'value', 0, 0.1, 0.001 ).name( 'scale' );
-    gui.add( boundHalfExtent, 'value', 0, 20, 0.01 ).name( 'boundHalfExtent' );
-    gui.addColor( { color: colorA.value.getHexString( THREE.SRGBColorSpace ) }, 'color' ).name( 'colorA' ).onChange( value => colorA.value.set( value ) );
-    gui.addColor( { color: colorB.value.getHexString( THREE.SRGBColorSpace ) }, 'color' ).name( 'colorB' ).onChange( value => colorB.value.set( value ) );
-    gui
-        .add( { controlsMode: attractors[ 0 ].controls.mode }, 'controlsMode' )
-        .options( [ 'translate', 'rotate', 'none' ] )
-        .onChange( value => {
-
-            for ( const attractor of attractors ) {
-
-                if ( value === 'none' ) {
-
-                    attractor.controls.visible = false;
-                    attractor.controls.enabled = false;
-
-                } else {
-
-                    attractor.controls.visible = true;
-                    attractor.controls.enabled = true;
-                    attractor.controls.mode = value;
-
-                }
-
-            }
-
-        } );
-
-    gui
-        .add( { helperVisible: attractors[ 0 ].helper.visible }, 'helperVisible' )
-        .onChange( value => {
-
-            for ( const attractor of attractors )
-                attractor.helper.visible = value;
-
-        } );
-
-    gui.add( { reset }, 'reset' );
 
 }
 
